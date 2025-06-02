@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MyShell - Web Terminal</title>
+    <style>
+        body {
+            background-color: #111;
+            color: #00ff88;
+            font-family: monospace;
+            padding: 20px;
+        }
+        #terminal {
+            width: 100%;
+            height: 80vh;
+            overflow-y: auto;
+            border: 1px solid #444;
+            padding: 10px;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+            background-color: #000;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            background-color: #000;
+            color: #00ff88;
+            border: 1px solid #444;
+            font-family: monospace;
+        }
+        button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            background-color: #222;
+            color: #00ff88;
+            border: 1px solid #444;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h2>💻 MyShell Web Terminal</h2>
+    <div id="terminal"></div>
+    <input id="input" autocomplete="off" autofocus placeholder="Type command and press Enter...">
+    <button onclick="clearTerminal()">Clear Screen</button>
+
+    <script>
+        let cwd = "{{ os.path.expanduser('~') }}";
+        const terminal = document.getElementById("terminal");
+        const input = document.getElementById("input");
+
+        function printToTerminal(text) {
+            terminal.innerText += text + "\n";
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function clearTerminal() {
+            terminal.innerText = "";
+        }
+
+        input.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                const command = input.value.trim();
+                if (command === "") return;
+                printToTerminal(`myshell [${cwd}]> ${command}`);
+                input.value = "";
+
+                fetch("/run", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ command, cwd })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    printToTerminal(data.output);
+                    cwd = data.cwd;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
